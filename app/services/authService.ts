@@ -2,7 +2,23 @@ import { ApiService } from "./api";
 import type { User } from "../models/types";
 
 class AuthService extends ApiService {
-  private currentUser: User | null = null;
+  private get currentUser(): User | null {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      return stored ? JSON.parse(stored) : null;
+    }
+    return null;
+  }
+
+  private set currentUser(user: User | null) {
+    if (typeof window !== 'undefined') {
+      if (user) {
+        localStorage.setItem('user', JSON.stringify(user));
+      } else {
+        localStorage.removeItem('user');
+      }
+    }
+  }
 
   async login(id: string, password?: string): Promise<User> {
     const response = await this.fetchData<{ token: string; id: string; name: string; role: User["role"] }>(
@@ -37,8 +53,6 @@ class AuthService extends ApiService {
 
     if (response?.success && response.data) {
       this.token = response.data.token;
-      // We don't get the user details back in register according to the spec, just the token
-      // We could optionally do a subsequent call to get user details if such endpoint exists
     } else {
       throw new Error(response?.message || "Registration failed");
     }
@@ -50,8 +64,6 @@ class AuthService extends ApiService {
   }
 
   getCurrentUser(): User | null {
-    // In a real app, you might decode the JWT here to get the user
-    // if the page was refreshed and currentUser is null but token exists.
     return this.currentUser;
   }
 }

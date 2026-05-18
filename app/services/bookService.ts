@@ -30,16 +30,16 @@ class BookService extends ApiService {
     throw new Error(response?.message || "Failed to create book");
   }
 
-  async updateBook(id: string, title: string): Promise<Book> {
+  async updateBook(id: string, fields: { title?: string; price?: number; lateFee?: number }): Promise<Book> {
     const response = await this.fetchData<Book>(`api/books/${id}`, {
       method: "PUT",
-      body: JSON.stringify({ title }),
+      body: JSON.stringify(fields),
     });
 
     if (response?.success && response.data) {
       return response.data;
     }
-    throw new Error(response?.message || "Failed to update book title");
+    throw new Error(response?.message || "Failed to update book");
   }
 
   async deleteBook(id: string): Promise<void> {

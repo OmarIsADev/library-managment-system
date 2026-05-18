@@ -1,30 +1,39 @@
-import { ApiService, delay } from "./api";
+import { ApiService } from "./api";
 import type { Transaction } from "../models/types";
-import { bookService } from "./bookService";
-
-let mockTransactions: Transaction[] = [];
 
 class TransactionService extends ApiService {
-  async reserveBook(id: string, studentId: string): Promise<Transaction> {
-    const updatedBook = await bookService.reserveBook(id);
-
-    const transaction: Transaction = {
-      transactionId: `tx-${Date.now()}`,
-      book: updatedBook,
-      studentId,
-      dueDate: updatedBook.dueDate || new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
-    };
-    mockTransactions.push(transaction);
-
-    return transaction;
+  async reserveBook(bookId: string, studentId: string): Promise<void> {
+    // The reserve endpoint is on the book controller, not transactions.
+    // The backend automatically records the transaction when a book is reserved.
+    const { bookService } = await import("./bookService");
+    await bookService.reserveBook(bookId);
   }
-  
-  async getTransactions(studentId?: string): Promise<Transaction[]> {
-    await delay(300);
-    if (studentId) {
-      return mockTransactions.filter(t => t.studentId === studentId);
+
+  async getMyActiveReservations(): Promise<Transaction[]> {
+    const response = await this.fetchData<Transaction[]>("api/transactions/my/active", {
+      method: "GET",
+    });
+    if (response?.success && response.data) {
+      return response.data;
     }
-    return [...mockTransactions];
+    throw new Error(response?.message || "Failed to fetch reservations");
+  }
+
+  async getMyTransactions(): Promise<Transaction[]> {
+    const response = await this.fetchData<Transaction[]>("api/transactions/my", {
+      method: "GET",
+    });
+    if (response?.success && response.data) {
+      return response.data;
+    }
+    throw new Error(response?.message || "Failed to fetch transactions");
+  }
+
+  async getTransactions(studentId?: string): Promise<Transaction[]> {
+    if (studentId) {
+      return this.getMyActiveReservations();
+    }
+    return this.getMyTransactions();
   }
 }
 

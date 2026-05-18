@@ -15,8 +15,12 @@ export interface Book {
 }
 
 export interface Transaction {
-  transactionId: string;
-  book: Book;
+  id: number;
   studentId: string;
-  dueDate: string;
+  bookId: string;
+  bookTitle: string | null;
+  type: "RESERVE" | "RETURN";
+  createdAt: string;
+  dueDate: string | null;
+  lateFee: number;
 }

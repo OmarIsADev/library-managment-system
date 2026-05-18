@@ -16,7 +16,7 @@ import { BookPlus, LogOut, Settings } from "lucide-react";
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
-  const { books, isLoading, createBook } = useBooks();
+  const { books, isLoading, createBook, updateBook, deleteBook, toggleBookStatus } = useBooks();
   const [open, setOpen] = useState(false);
   const [newBook, setNewBook] = useState({
     id: "",
@@ -123,7 +123,13 @@ export default function AdminDashboard() {
             </Dialog>
           </div>
 
-          <BooksTable books={books} isLoading={isLoading} />
+          <BooksTable
+            books={books}
+            isLoading={isLoading}
+            onUpdate={updateBook}
+            onDelete={deleteBook}
+            onToggleStatus={toggleBookStatus}
+          />
         </main>
       </div>
     </ProtectedRoute>

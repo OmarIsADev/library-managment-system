@@ -9,6 +9,7 @@ export function useTransactions(studentId?: string) {
 
   const fetchTransactions = useCallback(async () => {
     setIsLoading(true);
+    setError(null);
     try {
       const data = await transactionService.getTransactions(studentId);
       setTransactions(data);
@@ -20,14 +21,16 @@ export function useTransactions(studentId?: string) {
   }, [studentId]);
 
   useEffect(() => {
-    fetchTransactions();
-  }, [fetchTransactions]);
+    if (studentId) {
+      fetchTransactions();
+    }
+  }, [studentId, fetchTransactions]);
 
-  const reserveBook = useCallback(async (id: string, studId: string) => {
+  const reserveBook = useCallback(async (bookId: string, studId: string) => {
     setIsLoading(true);
     setError(null);
     try {
-      await transactionService.reserveBook(id, studId);
+      await transactionService.reserveBook(bookId, studId);
       await fetchTransactions();
     } catch (err: any) {
       setError(err.message || "Failed to reserve book");

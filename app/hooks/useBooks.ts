@@ -36,5 +36,51 @@ export function useBooks() {
     }
   }, [fetchBooks]);
 
-  return { books, isLoading, error, createBook, refetch: fetchBooks };
+  const updateBook = useCallback(async (id: string, fields: { title?: string; price?: number; lateFee?: number }) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await bookService.updateBook(id, fields);
+      await fetchBooks();
+    } catch (err: any) {
+      setError(err.message || "Failed to update book");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchBooks]);
+
+  const deleteBook = useCallback(async (id: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await bookService.deleteBook(id);
+      await fetchBooks();
+    } catch (err: any) {
+      setError(err.message || "Failed to delete book");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchBooks]);
+
+  const toggleBookStatus = useCallback(async (id: string, currentlyReserved: boolean) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      if (currentlyReserved) {
+        await bookService.returnBook(id);
+      } else {
+        await bookService.reserveBook(id);
+      }
+      await fetchBooks();
+    } catch (err: any) {
+      setError(err.message || "Failed to toggle book status");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchBooks]);
+
+  return { books, isLoading, error, createBook, updateBook, deleteBook, toggleBookStatus, refetch: fetchBooks };
 }

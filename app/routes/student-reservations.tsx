@@ -4,7 +4,6 @@ import { useTransactions } from "../hooks/useTransactions";
 import { Button } from "../components/ui/button";
 import { LogOut, Library, ArrowLeft, Clock, AlertTriangle, CheckCircle, BookOpen } from "lucide-react";
 import { Link } from "react-router";
-import { useEffect } from "react";
 import {
   Card,
   CardHeader,
@@ -14,23 +13,23 @@ import {
 
 export default function StudentReservations() {
   const { user, logout } = useAuth();
-  const { transactions, isLoading, error, refetch } = useTransactions(user?.id);
+  const { transactions, isLoading, error } = useTransactions(user?.id);
 
-  useEffect(() => {
-    if (user?.id) {
-      refetch();
-    }
-  }, [user?.id, refetch]);
-
-  const calculateFees = (dueDate: string, lateFee: number) => {
+  const calculateFees = (dueDate: string | null, lateFeePerDay: number) => {
+    if (!dueDate) return 0;
     const due = new Date(dueDate);
     const now = new Date();
     if (now > due) {
       const diffTime = Math.abs(now.getTime() - due.getTime());
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      return diffDays * lateFee;
+      return diffDays * (lateFeePerDay || 2);
     }
     return 0;
+  };
+
+  const isOverdue = (dueDate: string | null) => {
+    if (!dueDate) return false;
+    return new Date(dueDate) < new Date();
   };
 
   return (
@@ -74,43 +73,47 @@ export default function StudentReservations() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {transactions.map(transaction => {
-                const isOverdue = new Date(transaction.dueDate) < new Date();
-                const fees = isOverdue ? calculateFees(transaction.dueDate, transaction.book.lateFee || 2) : 0;
+                const overdue = isOverdue(transaction.dueDate);
+                const fees = overdue ? calculateFees(transaction.dueDate, transaction.lateFee) : 0;
                 
                 return (
-                  <Card key={transaction.transactionId} className="bg-white border-slate-200 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                    <div className={`h-1 w-full ${isOverdue ? "bg-red-600" : "bg-emerald-500"}`} />
+                  <Card key={transaction.id} className="bg-white border-slate-200 shadow-sm rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                    <div className={`h-1 w-full ${overdue ? "bg-red-600" : "bg-emerald-500"}`} />
                     <CardHeader className="pb-3 px-5 pt-5">
                       <div className="flex justify-between items-start mb-2">
                         <div className="bg-slate-100 p-2 rounded-md">
                           <BookOpen className="w-4 h-4 text-slate-600" />
                         </div>
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${isOverdue ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
-                          {isOverdue ? "OVERDUE" : "ON TRACK"}
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${overdue ? "bg-red-50 text-red-700 border-red-200" : "bg-emerald-50 text-emerald-700 border-emerald-200"}`}>
+                          {overdue ? "OVERDUE" : "ON TRACK"}
                         </span>
                       </div>
                       <CardTitle className="text-[17px] font-semibold leading-tight text-slate-900 line-clamp-2 mt-4">
-                        {transaction.book.title}
+                        {transaction.bookTitle || transaction.bookId}
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="px-5 pb-5 mt-1">
                       <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium">
-                        <span className="flex items-center text-sm font-semibold text-slate-900 mb-2">
-                          Price: ${transaction.book.price?.toFixed(2) || '0.00'}
-                        </span>
+                        <span className="text-xs text-slate-400">Book ID: {transaction.bookId}</span>
                         
-                        <div className={`flex items-center gap-1.5 mt-2 ${isOverdue ? 'text-red-600' : 'text-slate-600'}`}>
-                          {isOverdue ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                          <span>Return By: {new Date(transaction.dueDate).toLocaleDateString()}</span>
+                        {transaction.dueDate && (
+                          <div className={`flex items-center gap-1.5 mt-2 ${overdue ? 'text-red-600' : 'text-slate-600'}`}>
+                            {overdue ? <AlertTriangle className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                            <span>Return By: {new Date(transaction.dueDate).toLocaleDateString()}</span>
+                          </div>
+                        )}
+
+                        <div className="text-xs text-slate-400 mt-1">
+                          Reserved: {new Date(transaction.createdAt).toLocaleDateString()}
                         </div>
                         
-                        {isOverdue && (
+                        {overdue && (
                           <div className="mt-3 bg-red-50 p-3 rounded-lg border border-red-100 flex justify-between items-center text-sm">
                             <span className="text-red-800 font-semibold">Late Fees</span>
                             <span className="text-red-600 font-bold">${fees.toFixed(2)}</span>
                           </div>
                         )}
-                        {!isOverdue && (
+                        {!overdue && (
                            <div className="mt-3 bg-emerald-50 p-3 rounded-lg border border-emerald-100 flex items-center gap-2 text-sm text-emerald-700 font-medium">
                              <CheckCircle className="w-4 h-4" />
                              <span>No fees</span>

@@ -1,5 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { transactionService } from "../services/transactionService";
+import { bookService } from "../services/bookService";
 import type { Transaction } from "../models/types";
 
 export function useTransactions(studentId?: string) {
@@ -40,5 +41,19 @@ export function useTransactions(studentId?: string) {
     }
   }, [fetchTransactions]);
 
-  return { transactions, isLoading, error, reserveBook, refetch: fetchTransactions };
+  const returnBook = useCallback(async (bookId: string) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      await bookService.returnBook(bookId);
+      await fetchTransactions();
+    } catch (err: any) {
+      setError(err.message || "Failed to return book");
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [fetchTransactions]);
+
+  return { transactions, isLoading, error, reserveBook, returnBook, refetch: fetchTransactions };
 }

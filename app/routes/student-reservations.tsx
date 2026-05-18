@@ -1,19 +1,33 @@
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { useAuth } from "../hooks/useAuth";
 import { useTransactions } from "../hooks/useTransactions";
+import { useState } from "react";
 import { Button } from "../components/ui/button";
-import { LogOut, Library, ArrowLeft, Clock, AlertTriangle, CheckCircle, BookOpen } from "lucide-react";
+import { LogOut, Library, ArrowLeft, Clock, AlertTriangle, CheckCircle, BookOpen, Undo2 } from "lucide-react";
 import { Link } from "react-router";
 import {
   Card,
   CardHeader,
   CardTitle,
   CardContent,
+  CardFooter,
 } from "../components/ui/card";
 
 export default function StudentReservations() {
   const { user, logout } = useAuth();
-  const { transactions, isLoading, error } = useTransactions(user?.id);
+  const { transactions, isLoading, error, returnBook } = useTransactions(user?.id);
+  const [returningId, setReturningId] = useState<string | null>(null);
+
+  const handleReturn = async (bookId: string) => {
+    setReturningId(bookId);
+    try {
+      await returnBook(bookId);
+    } catch {
+      // error is set in the hook
+    } finally {
+      setReturningId(null);
+    }
+  };
 
   const calculateFees = (dueDate: string | null, lateFeePerDay: number) => {
     if (!dueDate) return 0;
@@ -121,6 +135,23 @@ export default function StudentReservations() {
                         )}
                       </div>
                     </CardContent>
+                    <CardFooter className="px-5 pb-5 pt-0">
+                      <Button
+                        onClick={() => handleReturn(transaction.bookId)}
+                        disabled={returningId !== null}
+                        className={`w-full rounded-lg font-medium shadow-sm h-10 ${
+                          overdue
+                            ? "bg-red-600 hover:bg-red-700 text-white"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
+                      >
+                        {returningId === transaction.bookId ? (
+                          "Returning..."
+                        ) : (
+                          <><Undo2 className="w-4 h-4 mr-2" /> Return Book</>
+                        )}
+                      </Button>
+                    </CardFooter>
                   </Card>
                 );
               })}

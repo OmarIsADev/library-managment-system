@@ -5,8 +5,9 @@ import { useTransactions } from "../hooks/useTransactions";
 import { useState } from "react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { LogOut, Search, Library } from "lucide-react";
+import { LogOut, Search, Library, BookMarked } from "lucide-react";
 import { BookCard } from "../components/BookCard";
+import { Link } from "react-router";
 
 export default function StudentDashboard() {
   const { user, logout } = useAuth();
@@ -36,9 +37,16 @@ export default function StudentDashboard() {
                 <p className="text-sm text-slate-500 font-medium">Welcome back, {user?.name}</p>
               </div>
             </div>
-            <Button variant="outline" onClick={logout} className="border-slate-200 text-slate-600 hover:bg-slate-50 font-medium bg-white">
-              <LogOut className="w-4 h-4 mr-2" /> Sign out
-            </Button>
+            <div className="flex items-center gap-4">
+              <Link to="/student/reservations">
+                <Button variant="outline" className="border-blue-200 text-blue-600 hover:bg-blue-50 font-medium bg-white">
+                  <BookMarked className="w-4 h-4 mr-2" /> My Reservations
+                </Button>
+              </Link>
+              <Button variant="outline" onClick={logout} className="border-slate-200 text-slate-600 hover:bg-slate-50 font-medium bg-white">
+                <LogOut className="w-4 h-4 mr-2" /> Sign out
+              </Button>
+            </div>
           </div>
         </header>
 

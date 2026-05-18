@@ -6,5 +6,5 @@ export default [
   route("register", "routes/register.tsx", { id: "register-route" }),
   route("admin/dashboard", "routes/admin-dashboard.tsx"),
   route("student/dashboard", "routes/student-dashboard.tsx"),
-  
+  route("student/reservations", "routes/student-reservations.tsx"),
 ] satisfies RouteConfig;
